@@ -15,7 +15,7 @@ public class AliceSessionCommand {
     private boolean newSession;
 
     @JsonProperty("message_id")
-    private Integer messageId;
+    private Long messageId;
 
     @JsonProperty("session_id")
     private String sessionId;
