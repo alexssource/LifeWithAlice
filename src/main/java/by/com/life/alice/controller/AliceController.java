@@ -245,13 +245,8 @@ public class AliceController {
                     return result;
                 }
             });
-            try {
-                getProfileTask.get();
-            } catch (InterruptedException e) {
-                e.printStackTrace();
-            } catch (ExecutionException e) {
-                e.printStackTrace();
-            }
+            Thread profileThread = new Thread(getProfileTask);
+            profileThread.start();
 
             // TODO: ask about phonne
             pendingCommands.push(pendingCommand);
