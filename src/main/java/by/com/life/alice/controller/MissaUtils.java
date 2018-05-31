@@ -59,9 +59,11 @@ public class MissaUtils {
     }
     private static TreeMap<String, AlisaUser> passwords = new TreeMap<String, AlisaUser>() {
         {
+            //не существующий
             put("375256257210", new AlisaUser("375256257210","73165752"));
+            //тестовый в миссе (не менять!!!)
             put("375256257211", new AlisaUser("375256257211","73165752"));
-            //
+            //тестовые
             put("375255501525", new AlisaUser("375255501525","76973235"));
             put("375256257331", new AlisaUser("375256257331","13828918"));
         }
