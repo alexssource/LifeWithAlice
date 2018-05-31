@@ -6,10 +6,9 @@ import lombok.NoArgsConstructor;
 import lombok.ToString;
 
 @Getter
-@AllArgsConstructor
 @NoArgsConstructor
 @ToString
-public class TockenDTO {
+public class MissaTockenDTO {
     private String access_token;
     private String token_type;
     private String refresh_token;
