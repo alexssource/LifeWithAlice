@@ -14,20 +14,24 @@ public class MissaUtils {
         }
     };
 
-    public static JSONLightSubscriber getProfile(String phone) {
+    public static String getToken(String phone) {
         RestTemplate restTemplate = new RestTemplate();
         HttpHeaders headers = new HttpHeaders();
         headers.set("Accept", MediaType.APPLICATION_JSON_VALUE);
         headers.set("Authorization", "Basic bW9iaWxlX2FwcDo7S0cqOF82VWQwcUIqVXg=");
         HttpEntity<?> entity = new HttpEntity<>(headers);
-        String password = "73165752";
-        ResponseEntity<TockenDTO> responce1 = restTemplate.exchange("https://missaauthtest.life.com.by/oauth/token?grant_type=password&username=" + phone + "&password=" + passwords.get(phone), HttpMethod.POST, entity, TockenDTO.class);
-        headers = new HttpHeaders();
+        ResponseEntity<TockenDTO> responce = restTemplate.exchange("https://missaauthtest.life.com.by/oauth/token?grant_type=password&username=" + phone + "&password=" + passwords.get(phone), HttpMethod.POST, entity, TockenDTO.class);
+        return responce.getBody().getAccess_token();
+    }
+
+    public static JSONLightSubscriber getProfile(String token) {
+        RestTemplate restTemplate = new RestTemplate();
+        HttpHeaders headers = new HttpHeaders();
         headers.set("Accept", MediaType.APPLICATION_JSON_VALUE);
-        headers.set("Authorization", "Bearer " + responce1.getBody().getAccess_token());
-        entity = new HttpEntity<>(headers);
-        ResponseEntity<JSONLightSubscriber> responce2 = restTemplate.exchange("http://srv-missa-p01:8085/api/v1/subscriber/profile", HttpMethod.GET, entity, JSONLightSubscriber.class);
-        return responce2.getBody();
+        headers.set("Authorization", "Bearer " + token);
+        HttpEntity<?> entity = new HttpEntity<>(headers);
+        ResponseEntity<JSONLightSubscriber> responce = restTemplate.exchange("http://srv-missa-p01:8085/api/v1/subscriber/profile", HttpMethod.GET, entity, JSONLightSubscriber.class);
+        return responce.getBody();
     }
 
     public static Boolean sendSms(String s) {
@@ -37,4 +41,5 @@ public class MissaUtils {
     public static Boolean verifyPhone(String code) {
         return false;
     }
+
 }

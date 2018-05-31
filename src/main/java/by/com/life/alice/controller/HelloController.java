@@ -15,10 +15,11 @@ public class HelloController {
     }
 
     @RequestMapping("/test")
-    String test(@RequestParam String q) {
+    String test(@RequestParam String q,@RequestParam String param) {
         switch (q) {
             case "getBalance":
-                JSONLightSubscriber profile = MissaUtils.getProfile("375256257211");
+                String token = MissaUtils.getToken(param);
+                JSONLightSubscriber profile = MissaUtils.getProfile(token);
                 StringBuilder sb = new StringBuilder();
                 for (JSONBalance balance : profile.getBalances()) {
                     sb.append("{Balance ").append(balance.getName()).append("=")
@@ -26,7 +27,7 @@ public class HelloController {
                 }
                 return sb.toString();
             case "sendSms":
-                return MissaUtils.sendSms("375256257211").toString();
+                return MissaUtils.sendSms(param).toString();
             case "verifyPhone":
                 return MissaUtils.verifyPhone("code").toString();
         }
