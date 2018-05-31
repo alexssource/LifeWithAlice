@@ -9,6 +9,7 @@ import by.com.life.alice.dto.AliceButtonDTO;
 import by.com.life.alice.dto.AliceResponseDTO;
 import by.com.life.alice.dto.AliceResponsePayloadDTO;
 import by.com.life.alice.dto.AliceSessionDTO;
+import by.com.life.alice.dto.v1.JSONLightSubscriber;
 import com.opencsv.CSVReader;
 import org.springframework.util.StringUtils;
 import org.springframework.web.bind.annotation.RequestBody;
@@ -23,6 +24,8 @@ import java.io.IOException;
 import java.util.ArrayList;
 import java.util.List;
 import java.util.Stack;
+import java.util.concurrent.Callable;
+import java.util.concurrent.FutureTask;
 
 @RestController
 @RequestMapping(value = "/alice")
@@ -104,6 +107,10 @@ public class AliceController {
                     PendingCommand pendingCommand = new PendingCommand(PendingCommandType.REMEMBER_MSISDN, new Object[] { command });
                     pendingCommands.add(pendingCommand);
                     return processStackCommand(request);
+                } else if ("да".equalsIgnoreCase(command.trim())) {
+                    PendingCommand pendingCommand = new PendingCommand(PendingCommandType.LISTEN_YES, new Object[] { command });
+                    pendingCommands.add(pendingCommand);
+                    return processStackCommand(request);
                 }
 
         }
@@ -143,11 +150,24 @@ public class AliceController {
                 return askMsisdn(pendingCommand, request);
             case REMEMBER_MSISDN:
                 return rememberMsisdnAndProcessStack(pendingCommand, request);
+            case CONFIRM_YOUR_PHONE:
+                return confirmYourPhone(pendingCommand, request);
+            case LISTEN_YES:
+                return listenYes(pendingCommand, request);
             case UNKNOWN_COMMAND:
                 default:
                     return unknownCommand(pendingCommand, request);
         }
 
+    }
+
+    private AliceResponseDTO listenYes(PendingCommand pendingCommand, AliceRequestCommand request) {
+        return processStackCommand(request);
+    }
+
+    private AliceResponseDTO confirmYourPhone(PendingCommand pendingCommand, AliceRequestCommand request) {
+        String responseText = "Твой номер " + knowledge.getMsisdn() + ". Верно?";
+        return createResponse(responseText, null, request);
     }
 
     private AliceResponseDTO rememberMsisdnAndProcessStack(PendingCommand pendingCommand, AliceRequestCommand request) {
@@ -169,8 +189,33 @@ public class AliceController {
             return processStackCommand(request);
         }
 
-        String responseText = "ЩА Я ТЕБЕ ПОКАЖУ ТВОЙ ПЛАН!!! на номер: " + knowledge.getMsisdn();
-        return createResponse(responseText, null, request);
+        String tokenOldAuth = MissaUtils.getTokenOldAuth(knowledge.getMsisdn());
+
+        if (!knowledge.hasProfile()) {
+            FutureTask<JSONLightSubscriber> getProfileTask = new FutureTask<JSONLightSubscriber>(new Callable<JSONLightSubscriber>() {
+                @Override
+                public JSONLightSubscriber call() throws Exception {
+                    System.out.println("Loading a profile...");
+                    JSONLightSubscriber profile = MissaUtils.getProfile(tokenOldAuth);
+                    knowledge.setProfile(profile);
+                    System.out.println("Profile is loaded: " + profile);
+                    return profile;
+                }
+            });
+//        JSONLightSubscriber profile = MissaUtils.getProfile(tokenOldAuth);
+            getProfileTask.run();
+
+            // TODO: ask about phonne
+            pendingCommands.push(pendingCommand);
+
+            PendingCommand confirmPhoneCommand = new PendingCommand(PendingCommandType.CONFIRM_YOUR_PHONE, null);
+            pendingCommands.push(confirmPhoneCommand);
+            return processStackCommand(request);
+        } else {
+            String codePlan = knowledge.getProfile().getTariff().getCode();
+            String responseText = String.format("Ваш тарифный план: %s на номер %s", codePlan, knowledge.getMsisdn());
+            return createResponse(responseText, null, request);
+        }
     }
 
     private AliceResponseDTO unknownCommand(PendingCommand pendingCommand, AliceRequestCommand request) {

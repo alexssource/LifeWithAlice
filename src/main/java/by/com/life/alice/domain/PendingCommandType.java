@@ -10,5 +10,7 @@ public enum PendingCommandType {
     SHOW_MY_PLAN,
     ASK_MSISDN,
     REMEMBER_MSISDN,
+    CONFIRM_YOUR_PHONE,
+    LISTEN_YES,
     UNKNOWN_COMMAND
 }
