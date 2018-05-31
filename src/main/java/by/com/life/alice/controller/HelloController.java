@@ -17,21 +17,24 @@ public class HelloController {
         return "Hello World!";
     }
 
-    String privacyIdeaToken, privacyIdeaTransactionId;
+    String privacyIdeaToken, privacyIdeaTransactionId, missaToken;
 
     @RequestMapping("/test")
     String test(@RequestParam String q,@RequestParam String ... param) {
         logger.info("test, q:"+q+" param:"+String.join(", ",param));
         switch (q) {
             case "getBalance":
-                String token = MissaUtils.getTokenOldAuth(param[0]);
-                JSONLightSubscriber profile = MissaUtils.getProfile(token);
+                missaToken = MissaUtils.getTokenOldAuth(param[0]);
+                JSONLightSubscriber profile = MissaUtils.getProfile(missaToken);
                 StringBuilder sb = new StringBuilder();
                 for (JSONBalance balance : profile.getBalances()) {
                     sb.append("{Balance ").append(balance.getName()).append("=")
                             .append(balance.getTotal()).append(" ").append(balance.getUnit()).append("},");
                 }
-                return sb.toString();
+                return profile.getTariff().getCode()+sb.toString();
+            case "changeTariff":
+                missaToken = MissaUtils.getTokenOldAuth(param[0]);
+                return MissaUtils.changeTariff(missaToken,param[1]).toString();
             case "getCode":
                 privacyIdeaToken = MissaUtils.getTokenPrivacyIdea();
                 privacyIdeaTransactionId = MissaUtils.getCodePrivacyIdea(param[0],privacyIdeaToken);

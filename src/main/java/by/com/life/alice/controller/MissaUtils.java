@@ -100,6 +100,18 @@ public class MissaUtils {
         return getFromMap((LinkedHashMap)map.get(path[0]),Arrays.copyOfRange(path,1,path.length));
     }
 
+    public static Boolean changeTariff(String token, String tariff) {
+        logger.info("changeTarif token:"+token);
+        RestTemplate restTemplate = new RestTemplate();
+        HttpHeaders headers = new HttpHeaders();
+        headers.set("Accept", MediaType.APPLICATION_JSON_VALUE);
+        headers.set("Authorization", "Bearer " + token);
+        HttpEntity<?> entity = new HttpEntity<>(headers);
+        ResponseEntity<LinkedHashMap> responce = restTemplate.exchange("http://srv-missa-p01:8085/api/v1/subscriber/tariff/"+tariff, HttpMethod.PUT, entity, LinkedHashMap.class);
+        logger.info("get msisdn:"+getFromMap(responce.getBody(),"success"));
+        return getFromMap(responce.getBody(),"success");
+    }
+
     public static String getTokenPrivacyIdea() {
         logger.info("getTokenPrivacyIdea");
         RestTemplate restTemplate = new RestTemplate();
