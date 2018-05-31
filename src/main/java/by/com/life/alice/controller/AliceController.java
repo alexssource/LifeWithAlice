@@ -125,6 +125,10 @@ public class AliceController {
                     PendingCommand pendingCommand = new PendingCommand(PendingCommandType.SHOW_MY_PLAN, null);
                     pendingCommands.add(pendingCommand);
                     return processStackCommand(request);
+                } else if (command.contains("смени тарифный план")) {
+                    PendingCommand pendingCommand = new PendingCommand(PendingCommandType.CHANGE_PLAN, new Object[] { command });
+                    pendingCommands.add(pendingCommand);
+                    return processStackCommand(request);
                 } else if (command.contains("тарифный план"))  {
                     for (TariffDescription tariff : tariffs) {
                         if (command.contains(tariff.getPlan().toLowerCase())) {
@@ -200,6 +204,9 @@ public class AliceController {
                 return confirmYourPhone(pendingCommand, request);
             case LISTEN_YES:
                 return listenYes(pendingCommand, request);
+            case CHANGE_PLAN:
+                knowledge.setChanged(false);
+                return changePlan(pendingCommand, request);
             case UNKNOWN_COMMAND:
                 default:
                     return unknownCommand(pendingCommand, request);
@@ -209,6 +216,47 @@ public class AliceController {
 
     private AliceResponseDTO listenYes(PendingCommand pendingCommand, AliceRequestCommand request) {
         return processStackCommand(request);
+    }
+
+    private AliceResponseDTO changePlan(PendingCommand pendingCommand, AliceRequestCommand request) {
+        if (!knowledge.hasMsisdn()) {
+            pendingCommands.push(pendingCommand);
+            PendingCommand askMsisdnCommand = new PendingCommand(PendingCommandType.ASK_MSISDN, null);
+            pendingCommands.push(askMsisdnCommand);
+            return processStackCommand(request);
+        }
+
+        String tokenOldAuth = MissaUtils.getTokenOldAuth(knowledge.getMsisdn());
+
+        if (!knowledge.isChanged()) {
+            FutureTask<Boolean> getProfileTask = new FutureTask<Boolean>(new Callable<Boolean>() {
+                @Override
+                public Boolean call() throws Exception {
+                    System.out.println("Loading a profile...");
+                    String[] command = ((String)pendingCommand.getArgs()[0]).split(" ");
+                    boolean result = MissaUtils.changeTariff(tokenOldAuth,command[command.length]);
+                    if(result) {
+                        JSONLightSubscriber profile = MissaUtils.getProfile(tokenOldAuth);
+                        knowledge.setProfile(profile);
+                        knowledge.setChanged(true);
+                        System.out.println("Profile is loaded: " + profile);
+                    }
+                    return result;
+                }
+            });
+            getProfileTask.run();
+
+            // TODO: ask about phonne
+            pendingCommands.push(pendingCommand);
+
+            PendingCommand confirmPhoneCommand = new PendingCommand(PendingCommandType.CONFIRM_YOUR_PHONE, null);
+            pendingCommands.push(confirmPhoneCommand);
+            return processStackCommand(request);
+        } else {
+            String codePlan = knowledge.getProfile().getTariff().getCode();
+            String responseText = String.format("Ваш тарифный план изменен на %s", codePlan);
+            return createResponse(responseText, null, request);
+        }
     }
 
     private AliceResponseDTO confirmYourPhone(PendingCommand pendingCommand, AliceRequestCommand request) {

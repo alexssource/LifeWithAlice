@@ -15,7 +15,7 @@ import org.springframework.util.StringUtils;
 public class AliceKnowledge {
     private String msisdn;
     private JSONLightSubscriber profile;
-
+    private boolean changed;
 
     public boolean hasMsisdn() {
         return !StringUtils.isEmpty(msisdn);
