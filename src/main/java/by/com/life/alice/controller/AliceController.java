@@ -1,10 +1,7 @@
 package by.com.life.alice.controller;
 
 import by.com.life.alice.command.AliceRequestCommand;
-import by.com.life.alice.domain.AliceKnowledge;
-import by.com.life.alice.domain.PendingCommand;
-import by.com.life.alice.domain.PendingCommandType;
-import by.com.life.alice.domain.TariffDescription;
+import by.com.life.alice.domain.*;
 import by.com.life.alice.dto.AliceButtonDTO;
 import by.com.life.alice.dto.AliceResponseDTO;
 import by.com.life.alice.dto.AliceResponsePayloadDTO;
@@ -18,7 +15,6 @@ import org.springframework.web.bind.annotation.RequestMethod;
 import org.springframework.web.bind.annotation.RestController;
 
 import javax.annotation.PostConstruct;
-import java.io.FileNotFoundException;
 import java.io.FileReader;
 import java.io.IOException;
 import java.util.ArrayList;
@@ -34,7 +30,7 @@ public class AliceController {
 
     private final List<TariffDescription> tariffs = new ArrayList<>(13);
     private final static Stack<PendingCommand> pendingCommands = new Stack<>();
-    private final static AliceKnowledge knowledge = new AliceKnowledge();
+//    private final static AliceKnowledge knowledge = new AliceKnowledge(sessionId);
 
 
     @PostConstruct
@@ -219,6 +215,10 @@ public class AliceController {
         return processStackCommand(request);
     }
 
+    private AliceKnowledge getKnowledge(AliceRequestCommand request) {
+        return AliceKnowledgeHolder.getKnowledge(request.getSession().getSessionId());
+    }
+
     private AliceResponseDTO changePlan(PendingCommand pendingCommand, AliceRequestCommand request) {
         if (!knowledge.hasMsisdn()) {
             pendingCommands.push(pendingCommand);
@@ -262,13 +262,13 @@ public class AliceController {
     }
 
     private AliceResponseDTO confirmYourPhone(PendingCommand pendingCommand, AliceRequestCommand request) {
-        String responseText = "Твой номер " + knowledge.getMsisdn() + ". Верно?";
+        String responseText = "Твой номер " + getKnowledge(request).getMsisdn() + ". Верно?";
         return createResponse(responseText, null, request);
     }
 
     private AliceResponseDTO rememberMsisdnAndProcessStack(PendingCommand pendingCommand, AliceRequestCommand request) {
         String msisdn = (String) pendingCommand.getArgs()[0];
-        knowledge.setMsisdn(msisdn);
+        getKnowledge(request).setMsisdn(msisdn);
         return processStackCommand(request);
     }
 
@@ -278,28 +278,31 @@ public class AliceController {
     }
 
     private AliceResponseDTO showMyPlan(PendingCommand pendingCommand, AliceRequestCommand request) {
-        if (!knowledge.hasMsisdn()) {
+        if (!getKnowledge(request).hasMsisdn()) {
             pendingCommands.push(pendingCommand);
             PendingCommand askMsisdnCommand = new PendingCommand(PendingCommandType.ASK_MSISDN, null);
             pendingCommands.push(askMsisdnCommand);
             return processStackCommand(request);
         }
 
-        String tokenOldAuth = MissaUtils.getTokenOldAuth(knowledge.getMsisdn());
+        String tokenOldAuth = MissaUtils.getTokenOldAuth(getKnowledge(request).getMsisdn());
 
-        if (!knowledge.hasProfile()) {
+        if (!getKnowledge(request).hasProfile()) {
             FutureTask<JSONLightSubscriber> getProfileTask = new FutureTask<JSONLightSubscriber>(new Callable<JSONLightSubscriber>() {
                 @Override
                 public JSONLightSubscriber call() throws Exception {
                     System.out.println("Loading a profile...");
                     JSONLightSubscriber profile = MissaUtils.getProfile(tokenOldAuth);
-                    knowledge.setProfile(profile);
+                    getKnowledge(request).setProfile(profile);
                     System.out.println("Profile is loaded: " + profile);
                     return profile;
                 }
             });
 //        JSONLightSubscriber profile = MissaUtils.getProfile(tokenOldAuth);
-            getProfileTask.run();
+            System.out.println("Before future");
+            Thread profileThread = new Thread(getProfileTask);
+            profileThread.start();
+            System.out.println("After future");
 
             // TODO: ask about phonne
             pendingCommands.push(pendingCommand);
@@ -308,8 +311,8 @@ public class AliceController {
             pendingCommands.push(confirmPhoneCommand);
             return processStackCommand(request);
         } else {
-            String codePlan = knowledge.getProfile().getTariff().getCode();
-            String responseText = String.format("Ваш тарифный план: %s на номер %s", codePlan, knowledge.getMsisdn());
+            String codePlan = getKnowledge(request).getProfile().getTariff().getCode();
+            String responseText = String.format("Ваш тарифный план: %s на номер %s", codePlan, getKnowledge(request).getMsisdn());
             return createResponse(responseText, null, request);
         }
     }
