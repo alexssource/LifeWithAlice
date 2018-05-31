@@ -25,6 +25,7 @@ import java.util.ArrayList;
 import java.util.List;
 import java.util.Stack;
 import java.util.concurrent.Callable;
+import java.util.concurrent.ExecutionException;
 import java.util.concurrent.FutureTask;
 
 @RestController
@@ -244,7 +245,13 @@ public class AliceController {
                     return result;
                 }
             });
-            getProfileTask.run();
+            try {
+                getProfileTask.get();
+            } catch (InterruptedException e) {
+                e.printStackTrace();
+            } catch (ExecutionException e) {
+                e.printStackTrace();
+            }
 
             // TODO: ask about phonne
             pendingCommands.push(pendingCommand);
