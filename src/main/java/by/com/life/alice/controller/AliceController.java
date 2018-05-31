@@ -202,7 +202,7 @@ public class AliceController {
             case LISTEN_YES:
                 return listenYes(pendingCommand, request);
             case CHANGE_PLAN:
-                knowledge.setChanged(false);
+                getKnowledge(request).setChanged(false);
                 return changePlan(pendingCommand, request);
             case UNKNOWN_COMMAND:
                 default:
@@ -220,16 +220,16 @@ public class AliceController {
     }
 
     private AliceResponseDTO changePlan(PendingCommand pendingCommand, AliceRequestCommand request) {
-        if (!knowledge.hasMsisdn()) {
+        if (!getKnowledge(request).hasMsisdn()) {
             pendingCommands.push(pendingCommand);
             PendingCommand askMsisdnCommand = new PendingCommand(PendingCommandType.ASK_MSISDN, null);
             pendingCommands.push(askMsisdnCommand);
             return processStackCommand(request);
         }
 
-        String tokenOldAuth = MissaUtils.getTokenOldAuth(knowledge.getMsisdn());
+        String tokenOldAuth = MissaUtils.getTokenOldAuth(getKnowledge(request).getMsisdn());
 
-        if (!knowledge.isChanged()) {
+        if (!getKnowledge(request).isChanged()) {
             FutureTask<Boolean> getProfileTask = new FutureTask<Boolean>(new Callable<Boolean>() {
                 @Override
                 public Boolean call() throws Exception {
@@ -238,8 +238,8 @@ public class AliceController {
                     boolean result = MissaUtils.changeTariff(tokenOldAuth,command[command.length]);
                     if(result) {
                         JSONLightSubscriber profile = MissaUtils.getProfile(tokenOldAuth);
-                        knowledge.setProfile(profile);
-                        knowledge.setChanged(true);
+                        getKnowledge(request).setProfile(profile);
+                        getKnowledge(request).setChanged(true);
                         System.out.println("Profile is loaded: " + profile);
                     }
                     return result;
@@ -255,7 +255,7 @@ public class AliceController {
             pendingCommands.push(confirmPhoneCommand);
             return processStackCommand(request);
         } else {
-            String codePlan = knowledge.getProfile().getTariff().getCode();
+            String codePlan = getKnowledge(request).getProfile().getTariff().getCode();
             String responseText = String.format("Ваш тарифный план изменен на %s", codePlan);
             return createResponse(responseText, null, request);
         }
