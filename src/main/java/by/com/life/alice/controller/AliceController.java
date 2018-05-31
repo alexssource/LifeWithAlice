@@ -45,6 +45,7 @@ public class AliceController {
             String[] line;
             while ((line = reader.readNext()) != null) {
                 TariffDescription tariffDescription = new TariffDescription(line[0], line[1], line[2], line[3], line[4], line[5], line[6], line[7], line[8]);
+                mapTiriff(line[0], tariffDescription);
                 tariffs.add(tariffDescription);
             }
         }  catch (IOException e) {
@@ -53,8 +54,53 @@ public class AliceController {
             String[] line;
             while ((line = reader.readNext()) != null) {
                 TariffDescription tariffDescription = new TariffDescription(line[0], line[1], line[2], line[3], line[4], line[5], line[6], line[7], line[8]);
+                mapTiriff(line[0], tariffDescription);
                 tariffs.add(tariffDescription);
             }
+        }
+    }
+
+    private void mapTiriff(String s, TariffDescription tariffDescription) {
+        switch (s){
+            case "Шейк 1":
+                tariffDescription.setCode("SHK1");
+                break;
+            case "Шейк 2":
+                tariffDescription.setCode("SHK2");
+                break;
+            case "Шейк 3":
+                tariffDescription.setCode("SHK3");
+                break;
+            case "Шейк 4":
+                tariffDescription.setCode("SHK4");
+                break;
+            case "Старт":
+                tariffDescription.setCode("CRTBL");
+                break;
+            case "Семья 1":
+                tariffDescription.setCode("SMP1");
+                break;
+            case "Семья 2":
+                tariffDescription.setCode("SMP2");
+                break;
+            case "Семья 3":
+                tariffDescription.setCode("SMP3");
+                break;
+            case "Мультинет":
+                tariffDescription.setCode("SMPN");
+                break;
+            case "йо1200":
+                tariffDescription.setCode("DL012");
+                break;
+            case "Голос 1":
+                tariffDescription.setCode("XS");
+                break;
+            case "Голос 2":
+                tariffDescription.setCode("V2");
+                break;
+            case "Интернет":
+                tariffDescription.setCode("3GM");
+                break;
         }
     }
 
