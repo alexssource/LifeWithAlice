@@ -150,7 +150,7 @@ public class AliceController {
                             }
                         }
                     }
-                } else if (command.contains("375")) {
+                } else if (command.contains("37")) {
                     PendingCommand pendingCommand = new PendingCommand(PendingCommandType.REMEMBER_MSISDN, new Object[] { command });
                     pendingCommands.add(pendingCommand);
                     return processStackCommand(request);
@@ -234,8 +234,12 @@ public class AliceController {
                 @Override
                 public Boolean call() throws Exception {
                     System.out.println("Loading a profile...");
-                    String[] command = ((String)pendingCommand.getArgs()[0]).split(" ");
-                    boolean result = MissaUtils.changeTariff(tokenOldAuth,command[command.length]);
+                    String a = (String)pendingCommand.getArgs()[0];
+                    int lastIndex = a.lastIndexOf("на ");
+                    String tariff = a.substring(lastIndex + 3, a.length());
+
+                    TariffDescription tariffDescription = tariffs.stream().filter(t -> t.getPlan().equalsIgnoreCase(tariff)).findFirst().get();
+                    boolean result = MissaUtils.changeTariff(tokenOldAuth, tariffDescription.getCode());
                     if(result) {
                         JSONLightSubscriber profile = MissaUtils.getProfile(tokenOldAuth);
                         getKnowledge(request).setProfile(profile);
@@ -245,7 +249,7 @@ public class AliceController {
                     return result;
                 }
             });
-            Thread profileThread = new Thread(getProfileTask);
+            Thread profileThread = new Thread(getProfileTask, "GetProfileForChangePlan");
             profileThread.start();
 
             // TODO: ask about phonne
@@ -267,7 +271,7 @@ public class AliceController {
     }
 
     private AliceResponseDTO rememberMsisdnAndProcessStack(PendingCommand pendingCommand, AliceRequestCommand request) {
-        String msisdn = (String) pendingCommand.getArgs()[0];
+        String msisdn = request.getRequest().getOriginalUtterance();
         getKnowledge(request).setMsisdn(msisdn);
         return processStackCommand(request);
     }
