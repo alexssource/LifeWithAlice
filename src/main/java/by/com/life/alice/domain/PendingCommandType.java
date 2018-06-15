@@ -13,5 +13,6 @@ public enum PendingCommandType {
     CONFIRM_YOUR_PHONE,
     LISTEN_YES,
     CHANGE_PLAN,
-    UNKNOWN_COMMAND
+    UNKNOWN_COMMAND,
+    ABOUT
 }

@@ -1,0 +1,10 @@
+[
+  {
+  "command": "ABOUT",
+  "pattern": "[Text][ты]+[Text][кто]+?[Text][что]+?[Text][сначала]+?[Text][умеешь]+?[Text][назад]+?[Text][себ]+?[Text][тариф]-&[Text][план]-&[Text][баланс]-&"
+  },
+  {
+    "command": "SHOW_ALL_PLANS",
+    "pattern": "[Text][как]+[Text][все]+?[Text][план]+?[Text][баланс]-&[Text][счёт]-&[Text][интернет]-&[Text][тариф]+?"
+  }
+]

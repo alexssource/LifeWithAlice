@@ -1,0 +1,6 @@
+[
+  {
+  "command": "ABOUT",
+  "pattern": "[Text][ты]+[Text][кто]+?[Text][что]+?[Text][сначала]+?[Text][умеешь]+?[Text][назад]+?[Text][себ]+?[Text][тариф]-&[Text][план]-&[Text][баланс]-&"
+  }
+]
